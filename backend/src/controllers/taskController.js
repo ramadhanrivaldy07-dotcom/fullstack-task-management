@@ -48,7 +48,7 @@ const createTask = async (req, res) => {
 
 const getTasks = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, search } = req.query;
 
         let query = `
             SELECT id, title, description, status, created_at, updated_at
@@ -74,6 +74,11 @@ const getTasks = async (req, res) => {
 
             query += " AND status = ?";
             params.push(status);
+        }
+
+        if (search) {
+            query += " AND title LIKE ?";
+            params.push(`%${search}%`);
         }
 
         query += " ORDER BY created_at DESC";

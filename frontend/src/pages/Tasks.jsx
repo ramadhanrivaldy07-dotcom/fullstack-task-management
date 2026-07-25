@@ -9,6 +9,8 @@ function Tasks({ onLogout }) {
     const [isSaving, setIsSaving] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const [form, setForm] = useState({
         title: "",
@@ -36,12 +38,25 @@ function Tasks({ onLogout }) {
     };
 
     useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search.trim());
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    useEffect(() => {
         const controller = new AbortController();
 
         const loadTasks = async () => {
             try {
                 const response = await api.get("/tasks", {
-                    params: status ? { status } : {},
+                    params: {
+                        ...(status && { status }),
+                        ...(debouncedSearch && {
+                            search: debouncedSearch
+                        })
+                    },
                     signal: controller.signal
                 });
 
@@ -63,7 +78,7 @@ function Tasks({ onLogout }) {
         loadTasks();
 
         return () => controller.abort();
-    }, [status, refreshKey]);
+    }, [status, debouncedSearch, refreshKey]);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -269,31 +284,71 @@ function Tasks({ onLogout }) {
                 </div>
             </div>
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-3">
                 <h4 className="mb-0">My Tasks</h4>
 
-                <div>
-                    <label className="me-2" htmlFor="task-filter">
-                        Filter:
-                    </label>
+                <div className="d-flex flex-wrap align-items-end gap-2">
+                    <div>
+                        <label
+                            className="form-label"
+                            htmlFor="task-search"
+                        >
+                            Search
+                        </label>
+                        <div className="input-group">
+                            <input
+                                id="task-search"
+                                className="form-control"
+                                type="search"
+                                placeholder="Search task title"
+                                value={search}
+                                onChange={(event) => {
+                                    setError("");
+                                    setLoading(true);
+                                    setSearch(event.target.value);
+                                }}
+                            />
+                            {search && (
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    type="button"
+                                    onClick={() => {
+                                        setError("");
+                                        setLoading(true);
+                                        setSearch("");
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-                    <select
-                        id="task-filter"
-                        className="form-select d-inline-block w-auto"
-                        value={status}
-                        onChange={(event) => {
-                            setError("");
-                            setLoading(true);
-                            setStatus(event.target.value);
-                        }}
-                    >
-                        <option value="">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">
-                            In Progress
-                        </option>
-                        <option value="done">Done</option>
-                    </select>
+                    <div>
+                        <label
+                            className="form-label"
+                            htmlFor="task-filter"
+                        >
+                            Filter
+                        </label>
+                        <select
+                            id="task-filter"
+                            className="form-select"
+                            value={status}
+                            onChange={(event) => {
+                                setError("");
+                                setLoading(true);
+                                setStatus(event.target.value);
+                            }}
+                        >
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">
+                                In Progress
+                            </option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -305,7 +360,9 @@ function Tasks({ onLogout }) {
 
             {!loading && tasks.length === 0 && (
                 <div className="alert alert-secondary">
-                    No tasks found.
+                    {debouncedSearch
+                        ? `No tasks found for "${debouncedSearch}".`
+                        : "No tasks found."}
                 </div>
             )}
 
