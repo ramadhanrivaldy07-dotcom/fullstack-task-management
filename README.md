@@ -1,6 +1,6 @@
 # Kanggo Task Management
 
-A simple fullstack task management application built as a technical test for PT. Tenaga Kanggo Indonesia.
+A simple fullstack task management application.
 
 The application allows users to register, login, and manage their own tasks. Authentication is implemented using JWT, and each user can only access and manage their own tasks.
 
