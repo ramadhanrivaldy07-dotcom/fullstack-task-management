@@ -114,7 +114,7 @@ Clone the repository:
 
 ```bash
 git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd kanggo-task-management
+cd fullstack-task-management
 ```
 
 ### 1. Database Setup
